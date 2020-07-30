@@ -1,9 +1,11 @@
-import km3pipe as kp
-import km3modules as km
 import numpy as np
 import io
 import os
 import sys
+import matplotlib
+matplotlib.use('Agg')
+import km3pipe as kp
+import km3modules as km
 from km3pipe.io.daq import TMCHData
 from km3pipe import Module
 from tabulate import tabulate
@@ -30,14 +32,14 @@ class OOSAnalyzer(Module):
     
     def process(self,blob):
         info = blob['TimesliceInfo']
-        TSindex=info['timestamp']
-        Time = info['nanoseconds']/1000000000
+        TSindex=info['timestamp'][0]
+        Time = info['nanoseconds'][0]/1000000000
         TSCounter = TSindex+Time
-        print ('TSCounter %d' % TSCounter[0], end='\r')
+        print ('TSCounter %d' % TSCounter, end='\r')
         self.status=0
         
         #TAKING 1 TS EACH MINUTE
-        if Time[0]==0.1 and TSindex%5==0:
+        if Time==0.1 and TSindex%60==0:
             tshits = blob['TSHits']
             self.doms = np.unique(tshits['dom_id'])
             self.numberofactivedom = len(self.doms)
@@ -69,14 +71,14 @@ class OOSAnalyzer(Module):
                 print("len",len(value))
                 #print("values",value)
                 print(str(i)+':',self.final_delay)
-                Dom_number= self.Dom_id_name[str(i)]
+                Dom_number= self.Dom_id_name[str(i)] #putting decimal dom number
                 #Implementig circular buffer on python dataframe
                 self.testdf.loc[len(self.testdf)+1] = [TSCounter, Dom_number, self.final_delay]
-                #self.over_threshold()
+                self.over_threshold()
             
             
             #plot at each hour if OOS not occurred                                                                                                                                                      
-            if TSCounter%30==0:
+            if TSindex%60==0:
                 self.plotter()
         else:
             return blob
@@ -109,8 +111,10 @@ class OOSAnalyzer(Module):
         name=[]
         Dom_number=[]
         for j in self.doms:
-            Dom_number=Dom_numer.append(self.Dom_id_name[str(j)])
+            Dom_number.append(self.Dom_id_name[str(j)]) #getting the doms in decimal base
+        
         Dom_number.sort()
+        print(Dom_number)
         for aa in Dom_number:
             partial = self.testdf[(self.testdf.DOMnumber == aa)].tail(60)
             name.append('CLB_'+str(aa))
@@ -134,7 +138,7 @@ class OOSAnalyzer(Module):
             l=df_list[i].plot(x ='Time', y='deltaT', kind='scatter', ax=axe)
             axe2 = plt.Subplot(fig, inner[1])
             axe2.tick_params(colors='red')
-            if count==3 or count == 7 or count == 11 or count == 15:
+            if i==3 or i == 7 or i == 11 or i == 15:
                 axe2.yaxis.tick_right()
                 #axe2.tick_params(right=True, labelright=True,colors='red')
             else:
