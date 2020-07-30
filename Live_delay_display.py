@@ -67,7 +67,7 @@ class OOSAnalyzer(Module):
                 for x in delay_over_TS:
                     if x > -7000 and  x < 7000:
                         value.append(x)
-                        self.final_delay=np.mean(value)
+                        self.final_delay=int(np.mean(value))
                 print("len",len(value))
                 #print("values",value)
                 print(str(i)+':',self.final_delay)
@@ -78,7 +78,7 @@ class OOSAnalyzer(Module):
             
             
             #plot at each hour if OOS not occurred                                                                                                                                                      
-            if TSindex%60==0:
+            if TSindex%3600==0:
                 self.plotter()
         else:
             return blob
@@ -114,6 +114,7 @@ class OOSAnalyzer(Module):
             Dom_number.append(self.Dom_id_name[str(j)]) #getting the doms in decimal base
         
         Dom_number.sort()
+        Dom_number=Dom_number[1:]
         print(Dom_number)
         for aa in Dom_number:
             partial = self.testdf[(self.testdf.DOMnumber == aa)].tail(60)
