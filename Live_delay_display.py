@@ -15,9 +15,10 @@ import matplotlib.gridspec as gridspec
 
 class OOSAnalyzer(Module):
     def configure(self):
-        self.orderedDOM = [806451575,808981684,808447031,808985194,808971330,806451239,808952022,808967370,808489098,808976266,809537142,808984748,808982228,808980464,808976292,809544159,808996919]
-        #self.decimal = list(range(1, 19)) 
-        self.Dom_id_name = dict(zip(str(self.orderedDOM),list(range(1, 19))))
+        self.orderedDOM = [806451575,808981684,808447031,808985194,808971330,800000000,806451239,808952022,808967370,808489098,808976266,809537142,808984748,808982228,808980464,808976292,809544159,808996919]
+        self.decimal = list(range(1, 19)) 
+        self.Dom_id_name = {str(self.orderedDOM[i]) : self.decimal[i] for i in range(len(self.orderedDOM))}
+        #print(self.Dom_id_name)
         self.doms=[]
         self.TOOS=0
         self.numberofactivedom=0
@@ -30,45 +31,52 @@ class OOSAnalyzer(Module):
     def process(self,blob):
         info = blob['TimesliceInfo']
         TSindex=info['timestamp']
-        Time = (info['nanoseconds'])/10**9
+        Time = info['nanoseconds']/1000000000
         TSCounter = TSindex+Time
-        print ('TSCounter %d' % TSCounter, end='\r')
+        print ('TSCounter %d' % TSCounter[0], end='\r')
         self.status=0
         
         #TAKING 1 TS EACH MINUTE
-        if Time==0.1 and TSindex%60==0:
+        if Time[0]==0.1 and TSindex%5==0:
             tshits = blob['TSHits']
             self.doms = np.unique(tshits['dom_id'])
             self.numberofactivedom = len(self.doms)
             #fixing DOM 1 SMALL 
-            dom1=tshits['dom_id'==806451575]
+            dom1=tshits[tshits.dom_id==806451575]
             pmt1_3 = dom1[dom1.channel_id == 12]
             #cycle over the remaining 16 DOMS 
+            
             now = datetime.now()
-            delay_over_TS=[]
             for i in self.orderedDOM[1:]:
-                dom2=tshits['dom_id'== i]
+                if i == 800000000:
+                    continue
+                dom2=tshits[tshits.dom_id == i]
                 #fixing for all the SMALL Board
                 pmt1_dtype = dom2[dom2.channel_id == 12]
+                delay_over_TS=[]
                 for t in pmt1_3.time:
                     for tt in pmt1_dtype.time:
                         deltat=tt-t
                         delay_over_TS.append(deltat)
+                #print(len(delay_over_TS))
+                #print(delay_over_TS)
                 #calculate the mean of a symmetric bound set around zero
                 value=[]
                 for x in delay_over_TS:
-                    if -10 < x and  x < 10:
+                    if x > -7000 and  x < 7000:
                         value.append(x)
-                self.final_delay=np.mean(value)
-                
+                        self.final_delay=np.mean(value)
+                print("len",len(value))
+                #print("values",value)
+                print(str(i)+':',self.final_delay)
                 Dom_number= self.Dom_id_name[str(i)]
                 #Implementig circular buffer on python dataframe
                 self.testdf.loc[len(self.testdf)+1] = [TSCounter, Dom_number, self.final_delay]
-                self.over_threshold()
+                #self.over_threshold()
             
             
             #plot at each hour if OOS not occurred                                                                                                                                                      
-            if TSCounter%3600==0:
+            if TSCounter%30==0:
                 self.plotter()
         else:
             return blob
@@ -79,7 +87,7 @@ class OOSAnalyzer(Module):
             Over1micro = self.testdf.loc[len(self.testdf)].to_csv('Over1micro.csv',mode='a',header=False) 
             self.status=1
         elif abs(self.final_delay) > 100:
-            Over100nano = self.testdf.loc[len(self.tetdf)].to_csv('Over100nano.csv',mode='a',header=False) 
+            Over100nano = self.testdf.loc[len(self.testdf)].to_csv('Over100nano.csv',mode='a',header=False) 
             self.status=1
         elif abs(self.final_delay) > 50:
             Over50nano = self.testdf.loc[len(self.testdf)].to_csv('Over50nano.csv',mode='a',header=False) 
