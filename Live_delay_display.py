@@ -32,12 +32,13 @@ class OOSAnalyzer(Module):
     
     def process(self,blob):
         info = blob['TimesliceInfo']
+        info2=blob['TimesliceFrameInfos']
+        #print(blob.keys)
         TSindex=info['timestamp'][0]
         Time = info['nanoseconds'][0]/1000000000
         TSCounter = TSindex+Time
         print ('TSCounter %d' % TSCounter, end='\r')
         self.status=0
-        
         #TAKING 1 TS EACH MINUTE
         if Time==0.1 and TSindex%60==0:
             tshits = blob['TSHits']
@@ -51,6 +52,7 @@ class OOSAnalyzer(Module):
             now = datetime.now()
             for i in self.orderedDOM[1:]:
                 if i == 800000000:
+                    #to skip DOM 6
                     continue
                 dom2=tshits[tshits.dom_id == i]
                 #fixing for all the SMALL Board
@@ -62,18 +64,20 @@ class OOSAnalyzer(Module):
                         delay_over_TS.append(deltat)
                 #print(len(delay_over_TS))
                 #print(delay_over_TS)
+
                 #calculate the mean of a symmetric bound set around zero
                 value=[]
                 for x in delay_over_TS:
                     if x > -7000 and  x < 7000:
                         value.append(x)
-                        self.final_delay=int(np.mean(value))
+                        self.final_delay=round(np.mean(value))
+                print('-.-.-.-.-.-.-.-.-.-.-.-')
                 print("len",len(value))
                 #print("values",value)
-                print(str(i)+':',self.final_delay)
-                Dom_number= self.Dom_id_name[str(i)] #putting decimal dom number
+                Dom_numbers= self.Dom_id_name[str(i)] #putting decimal dom number
+                print('DOM_'+str(Dom_numbers)+':',self.final_delay)
                 #Implementig circular buffer on python dataframe
-                self.testdf.loc[len(self.testdf)+1] = [TSCounter, Dom_number, self.final_delay]
+                self.testdf.loc[len(self.testdf)+1] = [TSCounter, Dom_numbers, self.final_delay]
                 self.over_threshold()
             
             
@@ -145,7 +149,7 @@ class OOSAnalyzer(Module):
             else:
                 axe2.set_yticks([])
             
-            g=self.testdf[(self.testdf.DOMnumber == i)].hist(column='deltaT',ax=axe2,color = "red")
+            g=self.testdf[(self.testdf.DOMnumber == Dom_number[i])].hist(column='deltaT',ax=axe2,color = "red")
             fig.add_subplot(axe)
             fig.add_subplot(axe2)
             titlename = name[i]
