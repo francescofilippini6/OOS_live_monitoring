@@ -19,11 +19,11 @@ def detx_file_reader():
     detx = open('D_BCI_NO_cali.detx','r')
     detout=open('D_BCI_Calibrated.detx','w')
     #skipping dom1 and the first 4 lines of header
-    for header in range(0,36):
+    for header in range(0,4):
         he=detx.readline()
         detout.write(he)
 
-    for body in range (2,19):
+    for body in range (1,19):
         #first line to skip with dom id pmt number ...
         detout.write(detx.readline())
         #read the 31 lines of the pmts
@@ -36,6 +36,14 @@ def detx_file_reader():
             
             a=detx.readline()
             b=a.split()
+            if body == 1:
+                if pmt < 12:
+                    b[-1]=list(delay.loc[delay.DOMnumber==float(body), 'deltaT'])[0]
+                else:
+                    b[-1]=0.
+                detout.write(' '+' '.join([str(elem) for elem in b])+'\n')
+                continue
+
             if pmt < 12:
                 b[-1]=list(delay.loc[delay.DOMnumber==float(body), 'deltaT'])[0]
             else:
