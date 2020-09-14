@@ -44,19 +44,22 @@ class OOSAnalyzer(Module):
             tshits = blob['TSHits']
             self.doms = np.unique(tshits['dom_id'])
             self.numberofactivedom = len(self.doms)
-            #fixing DOM 1 SMALL 
+            #fixing DOM 1 LARGE 
             dom1=tshits[tshits.dom_id==806451575]
             pmt1_3 = dom1[dom1.channel_id == 12]
-            
+           
             #cycle over the remaining 16 DOMS 
             now = datetime.now()
-            for i in self.orderedDOM[1:]:
+            for i in self.orderedDOM:
                 if i == 800000000:
                     #to skip DOM 6
                     continue
+                if i == 806451575:
+                    OPtype=[0]
+                else:
+                    OPtype=[0,12]
                 dom2=tshits[tshits.dom_id == i]
                 #fixing for all the LARGE Board
-                OPtype=[0,12]
                 for chan in OPtype:
                     pmt1_dtype = dom2[dom2.channel_id == chan]
                     delay_over_TS=[]
