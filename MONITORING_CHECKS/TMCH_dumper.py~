@@ -1,0 +1,54 @@
+import numpy as np
+import io
+import os
+import sys
+import matplotlib
+matplotlib.use('Agg')
+import km3pipe as kp
+import km3modules as km
+from km3pipe.io.daq import TMCHData
+from km3pipe import Module
+from tabulate import tabulate
+#from km3pipe.core import Pump
+import pandas as pd
+from datetime import datetime
+import matplotlib.pyplot as plt
+import matplotlib.gridspec as gridspec
+
+class OOSAnalyzer(Module):
+    def configure(self):
+        self.orderedDOM = [806451575,808981684,808447031,808985194,808971330,800000000,806451239,808952022,808967370,808489098,808976266,809537142,808984748,808982228,808980464,808976292,809544159,808996919]
+        self.decimal = list(range(1, 19)) 
+        self.Dom_id_name = {str(self.orderedDOM[i]) : self.decimal[i] for i in range(len(self.orderedDOM))}
+        self.doms=[]
+        self.times=[]
+        #self.delays=[]
+        self.numberofactivedom=0
+        
+    
+    def process(self,blob):
+        #TMCH only for monitoring channel
+        tmch_data = kp.io.daq.TMCHData(io.BytesIO(blob['CHData']))
+        timestamp=tmch_data.utc_seconds+tmch_data.nanoseconds*10**-9
+        print('---------------------',timestamp,'--------------------------------------')
+        print('DOM:',tmch_data.dom_id)
+        print(tmch_data.validity)
+        print(tmch_data.H)
+        
+        
+        
+    def finish(self):
+        print("-------BYE BYE!! (As catom (dialatt regian)-------)")
+        
+        
+    
+def main():
+    pipe=kp.Pipeline()
+    pipe.attach(kp.io.ch.CHPump , host='192.168.0.21', port=5553,tags='IO_MONIT',timeout=60 * 5,max_queue=2000)
+    pipe.attach(kp.io.daq.DAQProcessor)
+    pipe.attach(OOSAnalyzer)
+    pipe.drain()
+
+    
+if __name__ == '__main__':
+    main()

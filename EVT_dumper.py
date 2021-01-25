@@ -43,10 +43,13 @@ class OOSAnalyzer(Module):
         #if len(dom_id)>9:
         #    print("calibration")
         #    return blob
-        if 808971330 not in dom_id:
+        channels=event_hits[event_hits['dom_id']==808971330].channel_id
+        if 20 not in channels or 26 not in channels or 27 not in channels:
             return blob
+        #if 808971330 not in dom_id:
+        #    return blob
         calibration_offset = self.calibration_file_reader()          
-        print(calibration_offset)
+        #print(calibration_offset)
 
         for counter,dom in enumerate(self.orderedDOM):
         #for cycle for selecting the triggering DOMs
@@ -98,7 +101,7 @@ class OOSAnalyzer(Module):
         #still missing the recentering of the time and the fixing of the dimensions!! (18x280)
         #-----------------------------------------
         pos_z_edges = np.linspace(47, 695, 19)
-        time_edges = np.linspace(-200, 1200, 281) 
+        time_edges = np.linspace(-500, 1200, 281) 
         
         #x-y inverted due to matche the image dimension of the NN 
         array=plt.hist2d(height,t,bins=(pos_z_edges,time_edges))        
@@ -107,8 +110,8 @@ class OOSAnalyzer(Module):
         #print(array[0].shape)
         np.savetxt('event_image.txt',np.array(array[0]))
         image = array[0].reshape(1,18,280,1)
-        print(image.shape)
-        print(len(array[0][0]))
+        #print(image.shape)
+        #print(len(array[0][0]))
         
         #H = np.histogram2d(t,height,bins=(time_edges, pos_z_edges))
         #H = np.histogram2d(height,t,bins=(pos_z_edges,time_edges))
@@ -140,7 +143,7 @@ class OOSAnalyzer(Module):
         plt.title('z-t plane image')
         plt.savefig('hist.png')
         
-        sys.exit()
+        #sys.exit()
         
         
     def calibration_file_reader(self):          
