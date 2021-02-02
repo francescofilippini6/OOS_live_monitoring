@@ -36,7 +36,7 @@ for i in doms_list:
         #    axx.set_xlabel(" ")
         
     fig.tight_layout()
-    fig.savefig('DOM_'+str(i)+'.png')
+    fig.savefig('/home/km3net/analysis/MONITORING_CHECKS/Images/DOM_'+str(i)+'.png')
     
     
 
