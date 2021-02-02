@@ -25,16 +25,16 @@ class OOSAnalyzer(Module):
         self.times=[]
         #self.delays=[]
         self.numberofactivedom=0
-        self.testdf=pd.DataFrame(columns=['DOM','time(s)','timeslice(s)','RunNumber','yaw','pitch','roll','aX','aY','aZ','gX','gY','gZ','hX','hY','hZ','Temp','Humid'])        
+        self.testdf=pd.DataFrame(columns=['DOM','date','time(s)','timeslice(s)','RunNumber','yaw','pitch','roll','aX','aY','aZ','gX','gY','gZ','hX','hY','hZ','Temp','Humid'])        
     
     def process(self,blob):
         #TMCH only for monitoring channel
         tmch_data = kp.io.daq.TMCHData(io.BytesIO(blob['CHData']))
         #print(tmch_data)
-        #UTC_datetime = datetime.datetime.utcnow()
+        #UTC_datetime = str(datetime.datetime.utcnow())
         #UTC_datetime_timestamp = float(UTC_datetime.strftime("%s"))
         #local_datetime_converted = datetime.datetime.fromtimestamp(UTC_datetime_timestamp) 
-        timestamp_converted = datetime.datetime.fromtimestamp(tmch_data.utc_seconds) 
+        timestamp_converted =str(datetime.datetime.fromtimestamp(tmch_data.utc_seconds)).split(' ') 
         #print('local time: ',local_datetime_converted)
         timestamp=tmch_data.utc_seconds+tmch_data.nanoseconds*10**-9
         #print(timestamp)
@@ -44,12 +44,13 @@ class OOSAnalyzer(Module):
         #print('Validity: ',tmch_data.flags)
         #print('Compass data: ',tmch_data.H)
         if tmch_data.nanoseconds*10**-9 == 0.5:
-            self.testdf.loc[len(self.testdf)+1] = [self.Dom_id_name[str(tmch_data.dom_id)],timestamp_converted,timestamp,tmch_data.run,tmch_data.yaw,tmch_data.pitch,tmch_data.roll,tmch_data.A[0],tmch_data.A[1],tmch_data.A[2],tmch_data.G[0],tmch_data.G[1],tmch_data.G[2],tmch_data.H[0],tmch_data.H[1],tmch_data.H[2],tmch_data.temp,tmch_data.humidity]
+            self.testdf.loc[len(self.testdf)+1] = [self.Dom_id_name[str(tmch_data.dom_id)],timestamp_converted[0],timestamp_converted[1],timestamp,tmch_data.run,tmch_data.yaw,tmch_data.pitch,tmch_data.roll,tmch_data.A[0],tmch_data.A[1],tmch_data.A[2],tmch_data.G[0],tmch_data.G[1],tmch_data.G[2],tmch_data.H[0],tmch_data.H[1],tmch_data.H[2],tmch_data.temp,tmch_data.humidity]
             print("ciccio")
             #sys.exit()
-        
+        return blob
         
     def finish(self):
+        print("in finish...sorting the dataframe, can take a while")
         #print(self.testdf.sort_values(['DOM','timeslice(s)']))
         self.testdf.sort_values(['DOM','timeslice(s)']).to_csv('12-min-TMCH_Data_parsed',index=0)
         print("-------BYE BYE!! (As catom (dialatt regian)-------)")
@@ -58,7 +59,7 @@ class OOSAnalyzer(Module):
     
 def main():
     pipe=kp.Pipeline()
-    pipe.attach(kp.io.ch.CHPump , host='192.168.0.21', port=5553,tags='IO_MONIT',timeout=60*5,max_queue=2000)
+    pipe.attach(kp.io.ch.CHPump , host='192.168.0.21', port=5553,tags='IO_MONIT',timeout=60*5,max_queue=200000)
     pipe.attach(OOSAnalyzer)
     pipe.drain()
 

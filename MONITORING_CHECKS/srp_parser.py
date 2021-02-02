@@ -1,10 +1,14 @@
 import numpy as np
 import pandas as pd
+import datetime
 from collections import OrderedDict
 
-f = open("/home/km3net/analysis/MONITORING_CHECKS/Run12min","r")
+f = open("/home/km3net/analysis/MONITORING_CHECKS/Run3min","r")
 orderedDOM = [806451575,808981684,808447031,808985194,808971330,806451239,808952022,808967370,808489098,808976266,809537142,808984748,808982228,808980464,808976292,809544159,808996919]
-doms=list(range(1,18))
+doms=[1,2,3,4,5,7,8,9,10,11,12,13,14,15,16,17,18]
+
+dom_numbers = {orderedDOM[i] : doms[i] for i in range(len(doms))}
+
 ciccio=[]
 dom_list_upi = [] #list which contains all dom_i lists for all DOMs NOT USUED
 keys=[]
@@ -34,6 +38,7 @@ keys=['ahrs_pitch\n', 'ahrs_roll\n', 'ahrs_yaw\n', 'ahrs_a[0]\n', 'ahrs_a[1]\n',
 total_values=[]
 time_list=[]
 dom_list=[]
+date_list = []
 #DOM_list=[]
 key_values=[]
 for key in keys:
@@ -49,21 +54,29 @@ for key in keys:
                         break
                     row = lines[index+ind]
                     splitted_row = row.split(" ")
-                    time = splitted_row[0]+" "+splitted_row[1]+" "+splitted_row[2]
+                    time = splitted_row[1]
+                    if splitted_row[2] == 'PM':
+                        hour = str(int(splitted_row[1].split(':')[0])+12)
+                        time = hour+':'+splitted_row[1].split(':')[1]+':'+splitted_row[1].split(':')[2]
+                    date = splitted_row[0]
                     value = splitted_row[3]
                     if key == 'ahrs_pitch\n':
-                        time_list.append(time) 
-                        dom_list.append(dom)
+                        time_list.append(time)
+                        date_list.append(date)
+                        dom_list.append(dom_numbers[dom])
                     key_values.append(value)
                     
                 total_values.append(key_values)
-                
+
+UTC_datetime = str(datetime.datetime.utcnow())
+print(UTC_datetime)               
 #print(dom_list[:10])
 #print(time_list[:10])
 #print(len(total_values[0]))               
                     
-list_of_tuples = list(zip(dom_list,time_list,total_values[0],total_values[1],total_values[2],total_values[3],total_values[4],total_values[5],total_values[6],total_values[7],total_values[8],total_values[9],total_values[10],total_values[11],total_values[12],total_values[13]))            
-df = pd.DataFrame(list_of_tuples,columns=['DOM','time','yaw','pitch','roll','aX','aY','aZ','gX','gY','gZ','hX','hY','hZ','Temp','Humid'])
+list_of_tuples = list(zip(dom_list,date_list,time_list,total_values[0],total_values[1],total_values[2],total_values[3],total_values[4],total_values[5],total_values[6],total_values[7],total_values[8],total_values[9],total_values[10],total_values[11],total_values[12],total_values[13]))            
+df = pd.DataFrame(list_of_tuples,columns=['DOM','date','time','yaw','pitch','roll','aX','aY','aZ','gX','gY','gZ','hX','hY','hZ','Temp','Humid'])
+
 
 df.to_csv("/home/km3net/analysis/MONITORING_CHECKS/datalog_parsed.csv",index=1)
 f.close()
