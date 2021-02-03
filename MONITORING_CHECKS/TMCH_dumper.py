@@ -18,7 +18,7 @@ import datetime
 
 class OOSAnalyzer(Module):
     def configure(self):
-        self.orderedDOM = [806451575,808981684,808447031,808985194,808971330,800000000,806451239,808952022,808967370,808489098,808976266,809537142,808984748,808982228,808980464,808976292,809544159,808996919]
+        self.orderedDOM = [806451575,808981684,808447031,808985194,808971330,808982053,806451239,808952022,808967370,808489098,808976266,809537142,808984748,808982228,808980464,808976292,809544159,808996919]
         self.decimal = list(range(1, 19)) 
         self.Dom_id_name = {str(self.orderedDOM[i]) : self.decimal[i] for i in range(len(self.orderedDOM))}
         self.doms=[]
@@ -34,32 +34,28 @@ class OOSAnalyzer(Module):
         #UTC_datetime = str(datetime.datetime.utcnow())
         #UTC_datetime_timestamp = float(UTC_datetime.strftime("%s"))
         #local_datetime_converted = datetime.datetime.fromtimestamp(UTC_datetime_timestamp) 
+        
         timestamp_converted =str(datetime.datetime.fromtimestamp(tmch_data.utc_seconds)).split(' ') 
-        #print('local time: ',local_datetime_converted)
         timestamp=tmch_data.utc_seconds+tmch_data.nanoseconds*10**-9
-        #print(timestamp)
-        #print('\nTimestamp = ',timestamp)
-        #print('\nTimestamp in seconds = ',timestamp_converted)
-        #print('DOM:',self.Dom_id_name[str(tmch_data.dom_id)])
-        #print('Validity: ',tmch_data.flags)
-        #print('Compass data: ',tmch_data.H)
+        
+        #selecting 1 TS each second
         if tmch_data.nanoseconds*10**-9 == 0.5:
             self.testdf.loc[len(self.testdf)+1] = [self.Dom_id_name[str(tmch_data.dom_id)],timestamp_converted[0],timestamp_converted[1],timestamp,tmch_data.run,tmch_data.yaw,tmch_data.pitch,tmch_data.roll,tmch_data.A[0],tmch_data.A[1],tmch_data.A[2],tmch_data.G[0],tmch_data.G[1],tmch_data.G[2],tmch_data.H[0],tmch_data.H[1],tmch_data.H[2],tmch_data.temp,tmch_data.humidity]
-            print("ciccio")
-            #sys.exit()
+            
+  
         return blob
         
     def finish(self):
         print("in finish...sorting the dataframe, can take a while")
         #print(self.testdf.sort_values(['DOM','timeslice(s)']))
-        self.testdf.sort_values(['DOM','timeslice(s)']).to_csv('12-min-TMCH_Data_parsed',index=0)
+        self.testdf.sort_values(['DOM','timeslice(s)']).to_csv('12-min-TMCH_Data_parsed',index=1)
         print("-------BYE BYE!! (As catom (dialatt regian)-------)")
         
         
     
 def main():
     pipe=kp.Pipeline()
-    pipe.attach(kp.io.ch.CHPump , host='192.168.0.21', port=5553,tags='IO_MONIT',timeout=60*5,max_queue=200000)
+    pipe.attach(kp.io.ch.CHPump , host='192.168.0.21', port=5553,tags='IO_MONIT',timeout=30,max_queue=2000000)
     pipe.attach(OOSAnalyzer)
     pipe.drain()
 

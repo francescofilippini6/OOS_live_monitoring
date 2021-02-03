@@ -1,6 +1,6 @@
 # steps to produce the monitoring plots 
 
-1. Launch the python program: python TMCH_dumper.py
+1. Launch the python program: python TMCH_dumper.py  (30 s timeout if not recieving data)
 2. put in run the string, with whatever runsetup
 3. waiting for the end of the run
 
